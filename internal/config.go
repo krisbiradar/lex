@@ -3,6 +3,7 @@ package internal
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -16,11 +17,32 @@ type Config struct {
 
 func LoadConfig() *Config {
 	_ = godotenv.Load()
-	port, _ := strconv.Atoi(os.Getenv("port"))
 	return &Config{
-		Env:              godotenvtenvOr("env", "local"),
-		Port:             port,
-		EmbeddingModel:   os.Must("embeddingModel"),
-		ConnectionString: os.Getenv("connectionString"),
+		Env:              readString("env", "development"),
+		Port:             readInt("port", 7821),
+		EmbeddingModel:   readString("embedding_model", "bge-large-en-v1.5"),
+		ConnectionString: readString("connectionString", ""),
 	}
+}
+
+func readString(key string, defaultValue string) string {
+	val := strings.TrimSpace(os.Getenv(key))
+	if val == "" {
+		return defaultValue
+	}
+	return val
+
+}
+
+func readInt(key string, defaultValue int) int {
+	rawval := strings.TrimSpace(os.Getenv(key))
+	if rawval == "" {
+		return defaultValue
+	}
+	val, err := strconv.Atoi(strings.TrimSpace(rawval))
+	if err != nil {
+		return defaultValue
+	}
+	return val
+
 }
