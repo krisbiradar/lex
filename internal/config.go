@@ -6,13 +6,16 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap/zapcore"
 )
 
 type Config struct {
 	Env              string
 	Port             int
 	EmbeddingModel   string
+	ModelPath        string
 	ConnectionString string
+	DefaultLogLevel  zapcore.Level
 }
 
 func LoadConfig() *Config {
@@ -21,7 +24,9 @@ func LoadConfig() *Config {
 		Env:              readString("env", "development"),
 		Port:             readInt("port", 7821),
 		EmbeddingModel:   readString("embedding_model", "bge-large-en-v1.5"),
+		ModelPath:        readString("models", "models"),
 		ConnectionString: readString("connectionString", ""),
+		DefaultLogLevel:  readLogLevel("log_level"),
 	}
 }
 
@@ -45,4 +50,16 @@ func readInt(key string, defaultValue int) int {
 	}
 	return val
 
+}
+
+func readLogLevel(key string) zapcore.Level {
+	rawval := strings.TrimSpace(os.Getenv(key))
+	if rawval == "" {
+		return zapcore.InfoLevel
+	}
+	lvl, err := zapcore.ParseLevel(rawval)
+	if err != nil {
+		return zapcore.InfoLevel
+	}
+	return lvl
 }
